@@ -14,7 +14,8 @@ export default function Login() {
     setError("");
 
     try {
-      await login(email, password);
+      await login(email, password); // removed unused variable
+
       if (email === "Sumit@admin.com") navigate("/admin/dashboard");
       else if (role === "resident") navigate("/resident/dashboard");
       else if (role === "watchman") navigate("/watchman/dashboard");

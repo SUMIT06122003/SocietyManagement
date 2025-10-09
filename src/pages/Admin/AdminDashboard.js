@@ -6,46 +6,69 @@ export default function AdminDashboard() {
   const navigate = useNavigate();
 
   const cardStyle = {
-    backgroundColor: "#f0f0f0",
-    padding: "30px",
-    borderRadius: "10px",
+    background: "linear-gradient(135deg, #4c6ef5, #15aabf)",
+    color: "white",
+    padding: "35px",
+    borderRadius: "15px",
     width: "220px",
     textAlign: "center",
     cursor: "pointer",
-    boxShadow: "0 2px 5px rgba(0,0,0,0.1)",
+    boxShadow: "0 8px 15px rgba(0,0,0,0.2)",
+    transition: "transform 0.2s, box-shadow 0.2s",
+    fontSize: "18px",
+    fontWeight: "600",
+  };
+
+  const cardHover = {
+    transform: "translateY(-5px)",
+    boxShadow: "0 12px 20px rgba(0,0,0,0.3)",
+  };
+
+  const containerStyle = {
+    display: "flex",
+    flexWrap: "wrap",
+    justifyContent: "center",
+    gap: "30px",
+    marginTop: "50px",
+  };
+
+  const headerStyle = {
+    textAlign: "center",
+    marginTop: "30px",
+    fontSize: "28px",
+    fontWeight: "700",
+    color: "#003366",
   };
 
   return (
     <div>
       <Navbar />
-      <h2 style={{ textAlign: "center", marginTop: "30px" }}>Admin Dashboard</h2>
-      <div
-        style={{
-          display: "flex",
-          flexWrap: "wrap",
-          justifyContent: "center",
-          gap: "30px",
-          marginTop: "50px",
-        }}
-      >
-        <div style={cardStyle} onClick={() => navigate("/admin/create-watchman")}>
-          👤 Create Watchman
-        </div>
-        <div style={cardStyle} onClick={() => navigate("/admin/maintenance-status")}>
-          💰 Maintenance Status
-        </div>
-        <div style={cardStyle} onClick={() => navigate("/admin/complaints-view")}>
-          📝 Complaints
-        </div>
-        <div style={cardStyle} onClick={() => navigate("/admin/amenities-requests")}>
-          🏊 Amenities Requests
-        </div>
-        <div style={cardStyle} onClick={() => navigate("/admin/clubhouse-bookings")}>
-          🏠 Clubhouse Bookings
-        </div>
-        <div style={cardStyle} onClick={() => navigate("/admin/visitors")}>
-          🧑‍💼 Visitor Log
-        </div>
+      <h2 style={headerStyle}>Admin Dashboard</h2>
+      <div style={containerStyle}>
+        {[
+          { label: "Create Watchman", icon: "👤", path: "/admin/create-watchman" },
+          { label: "Maintenance Status", icon: "💰", path: "/admin/maintenance-status" },
+          { label: "Complaints", icon: "📝", path: "/admin/complaints-view" },
+          { label: "Amenities Requests", icon: "🏊", path: "/admin/amenities-requests" },
+          { label: "Clubhouse Bookings", icon: "🏠", path: "/admin/clubhouse-bookings" },
+          { label: "Visitor Log", icon: "🧑‍💼", path: "/admin/visitors" },
+        ].map((card) => (
+          <div
+            key={card.label}
+            style={cardStyle}
+            onClick={() => navigate(card.path)}
+            onMouseEnter={(e) => Object.assign(e.currentTarget.style, cardHover)}
+            onMouseLeave={(e) =>
+              Object.assign(e.currentTarget.style, {
+                transform: "translateY(0)",
+                boxShadow: "0 8px 15px rgba(0,0,0,0.2)",
+              })
+            }
+          >
+            <div style={{ fontSize: "40px", marginBottom: "10px" }}>{card.icon}</div>
+            {card.label}
+          </div>
+        ))}
       </div>
     </div>
   );

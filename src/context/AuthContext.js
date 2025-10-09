@@ -4,6 +4,7 @@ import {
   onAuthStateChanged,
   signInWithEmailAndPassword,
   updateProfile,
+  signOut,
 } from "firebase/auth";
 import { auth, db } from "../firebase";
 import { doc, setDoc, getDoc } from "firebase/firestore";
@@ -34,7 +35,10 @@ export const AuthProvider = ({ children }) => {
           role: "admin",
           name: "Admin",
         });
+
         console.log("✅ Default admin created.");
+      } else {
+        console.log("✅ Admin already exists.");
       }
     } catch (err) {
       if (err.code === "auth/email-already-in-use") {
@@ -47,25 +51,38 @@ export const AuthProvider = ({ children }) => {
 
   // ✅ Handle login
   const login = async (email, password) => {
-    const res = await signInWithEmailAndPassword(auth, email, password);
-    const docSnap = await getDoc(doc(db, "users", email));
-    if (docSnap.exists()) setRole(docSnap.data().role);
-    return res;
+    try {
+      const res = await signInWithEmailAndPassword(auth, email, password);
+      const docSnap = await getDoc(doc(db, "users", email));
+      if (docSnap.exists()) setRole(docSnap.data().role);
+      return res;
+    } catch (err) {
+      throw new Error(err.message);
+    }
+  };
+
+  // ✅ Handle logout
+  const logout = async () => {
+    try {
+      await signOut(auth);
+      setCurrentUser(null);
+      setRole(null);
+    } catch (err) {
+      console.error("Logout failed:", err.message);
+    }
   };
 
   // ✅ Handle resident registration
-  const registerResident = async (name, email, password) => {
-    const userCredential = await createUserWithEmailAndPassword(
-      auth,
-      email,
-      password
-    );
+  const registerResident = async (name, email, password, flatNumber) => {
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     await updateProfile(userCredential.user, { displayName: name });
 
     await setDoc(doc(db, "users", email), {
       email,
       name,
+      flatNumber,
       role: "resident",
+      createdAt: new Date(),
     });
   };
 
@@ -76,8 +93,14 @@ export const AuthProvider = ({ children }) => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
         setCurrentUser(user);
-        const userDoc = await getDoc(doc(db, "users", user.email));
-        setRole(userDoc.exists() ? userDoc.data().role : null);
+
+        try {
+          const userDoc = await getDoc(doc(db, "users", user.email));
+          setRole(userDoc.exists() ? userDoc.data().role : null);
+        } catch (err) {
+          console.error("Error fetching user role:", err.message);
+          setRole(null);
+        }
       } else {
         setCurrentUser(null);
         setRole(null);
@@ -93,12 +116,9 @@ export const AuthProvider = ({ children }) => {
     role,
     loading,
     login,
+    logout,
     registerResident,
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {!loading && children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{!loading && children}</AuthContext.Provider>;
 };

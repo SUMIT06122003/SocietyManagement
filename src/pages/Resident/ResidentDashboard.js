@@ -6,82 +6,69 @@ export default function ResidentDashboard() {
   const navigate = useNavigate();
 
   const cardStyle = {
-    backgroundColor: "#f0f0f0",
-    padding: "30px",
-    borderRadius: "10px",
+    background: "linear-gradient(135deg, #15aabf, #4c6ef5)",
+    color: "white",
+    padding: "35px",
+    borderRadius: "15px",
     width: "220px",
     textAlign: "center",
     cursor: "pointer",
-    boxShadow: "0 2px 5px rgba(0,0,0,0.1)",
-    transition: "transform 0.2s",
+    boxShadow: "0 8px 15px rgba(0,0,0,0.2)",
+    transition: "transform 0.2s, box-shadow 0.2s",
+    fontSize: "18px",
+    fontWeight: "600",
   };
 
-  const handleNavigate = (path) => {
-    navigate(path);
+  const cardHover = {
+    transform: "translateY(-5px)",
+    boxShadow: "0 12px 20px rgba(0,0,0,0.3)",
   };
+
+  const containerStyle = {
+    display: "flex",
+    flexWrap: "wrap",
+    justifyContent: "center",
+    gap: "30px",
+    marginTop: "50px",
+  };
+
+  const headerStyle = {
+    textAlign: "center",
+    marginTop: "30px",
+    fontSize: "28px",
+    fontWeight: "700",
+    color: "#003366",
+  };
+
+  const cards = [
+    { label: "Pay Maintenance", icon: "💰", path: "/resident/pay-maintenance" },
+    { label: "Book Amenities", icon: "🏊", path: "/resident/amenities" },
+    { label: "Book Clubhouse", icon: "🏠", path: "/resident/book-clubhouse" },
+    { label: "Complaint", icon: "📝", path: "/resident/complaints" },
+  ];
 
   return (
     <div>
       <Navbar />
-
-      <h2
-        style={{
-          textAlign: "center",
-          marginTop: "30px",
-          color: "#003366",
-        }}
-      >
-        Resident Dashboard
-      </h2>
-
-      <div
-        style={{
-          display: "flex",
-          flexWrap: "wrap",
-          justifyContent: "center",
-          gap: "30px",
-          marginTop: "50px",
-        }}
-      >
-        {/* Pay Maintenance */}
-        <div
-          style={cardStyle}
-          onClick={() => handleNavigate("/resident/pay-maintenance")}
-          onMouseOver={(e) => (e.currentTarget.style.transform = "scale(1.05)")}
-          onMouseOut={(e) => (e.currentTarget.style.transform = "scale(1)")}
-        >
-          💰 Pay Maintenance
-        </div>
-
-        {/* Book Amenities */}
-        <div
-          style={cardStyle}
-          onClick={() => handleNavigate("/resident/amenities")}
-          onMouseOver={(e) => (e.currentTarget.style.transform = "scale(1.05)")}
-          onMouseOut={(e) => (e.currentTarget.style.transform = "scale(1)")}
-        >
-          🏊 Book Amenities
-        </div>
-
-        {/* Book Clubhouse */}
-        <div
-          style={cardStyle}
-          onClick={() => handleNavigate("/resident/book-clubhouse")}
-          onMouseOver={(e) => (e.currentTarget.style.transform = "scale(1.05)")}
-          onMouseOut={(e) => (e.currentTarget.style.transform = "scale(1)")}
-        >
-          🏠 Book Clubhouse
-        </div>
-
-        {/* Complaint */}
-        <div
-          style={cardStyle}
-          onClick={() => handleNavigate("/resident/complaints")}
-          onMouseOver={(e) => (e.currentTarget.style.transform = "scale(1.05)")}
-          onMouseOut={(e) => (e.currentTarget.style.transform = "scale(1)")}
-        >
-          📝 Complaint
-        </div>
+      <h2 style={headerStyle}>Resident Dashboard</h2>
+      <div style={containerStyle}>
+        {cards.map((card) => (
+          <div
+            key={card.label}
+            style={cardStyle}
+            onClick={() => navigate(card.path)}
+            onMouseEnter={(e) => Object.assign(e.currentTarget.style, cardHover)}
+            onMouseLeave={(e) =>
+              Object.assign(e.currentTarget.style, {
+                transform: "translateY(0)",
+                boxShadow: "0 8px 15px rgba(0,0,0,0.2)",
+              })
+            }
+          >
+            <div style={{ fontSize: "40px", marginBottom: "10px" }}>{card.icon}</div>
+            {card.label}
+          </div>
+        ))}
       </div>
     </div>
   );

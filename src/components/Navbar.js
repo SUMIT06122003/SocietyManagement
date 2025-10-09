@@ -1,9 +1,10 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { auth } from "../firebase"; // import auth directly
 
 export default function Navbar({ currentUser, role }) {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleLogout = async () => {
     try {
@@ -13,6 +14,9 @@ export default function Navbar({ currentUser, role }) {
       console.error("Logout failed:", err);
     }
   };
+
+  // Show back button only if not on login/home page
+  const showBackButton = !["/", "/login", "/register"].includes(location.pathname);
 
   const navStyle = {
     display: "flex",
@@ -32,9 +36,24 @@ export default function Navbar({ currentUser, role }) {
     cursor: "pointer",
   };
 
+  const backBtnStyle = {
+    padding: "8px 15px",
+    backgroundColor: "#555",
+    color: "white",
+    border: "none",
+    borderRadius: "5px",
+    cursor: "pointer",
+    marginRight: "15px",
+  };
+
   return (
     <nav style={navStyle}>
-      <div style={{ fontWeight: "bold" }}>
+      <div style={{ display: "flex", alignItems: "center", fontWeight: "bold" }}>
+        {showBackButton && (
+          <button style={backBtnStyle} onClick={() => navigate(-1)}>
+            ← Back
+          </button>
+        )}
         Universal Society - {role ? role.charAt(0).toUpperCase() + role.slice(1) : ""}
       </div>
       <div>

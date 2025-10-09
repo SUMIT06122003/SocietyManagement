@@ -1,45 +1,47 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
-
-// Firebase imports
 import { auth, db } from "../firebase";
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
+import { AuthContext } from "../context/AuthContext";
 
 export default function RegisterResident() {
   const navigate = useNavigate();
+  const { login } = useContext(AuthContext);
 
-  // State for form inputs
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [flatNumber, setFlatNumber] = useState("");
   const [password, setPassword] = useState("");
 
-  // Handle registration
   const handleRegister = async (e) => {
     e.preventDefault();
-    if (!name || !email || !password) return alert("All fields are required");
+    if (!name || !email || !flatNumber || !password) {
+      return alert("All fields are required");
+    }
 
     try {
-      // Create user in Firebase Auth
+      // 1️⃣ Create user in Firebase Auth
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
 
-      // Set displayName
+      // 2️⃣ Set display name
       await updateProfile(userCredential.user, { displayName: name });
 
-      // Save user info in Firestore
+      // 3️⃣ Save user info in Firestore
       await setDoc(doc(db, "users", email), {
         email,
         name,
+        flatNumber,
         role: "resident",
         createdAt: new Date(),
       });
 
-      alert("Registration successful! Please login.");
-      setName("");
-      setEmail("");
-      setPassword("");
-      navigate("/"); // redirect to login
+      // 4️⃣ Auto-login the user
+      await login(email, password);
+
+      // 5️⃣ Redirect to Resident Dashboard
+      navigate("/resident/dashboard");
     } catch (err) {
       console.error("Error registering resident:", err);
       if (err.code === "auth/email-already-in-use") {
@@ -57,7 +59,15 @@ export default function RegisterResident() {
   return (
     <div>
       <Navbar />
-      <div style={{ maxWidth: "500px", margin: "50px auto", padding: "30px", backgroundColor: "#f9f9f9", borderRadius: "10px" }}>
+      <div
+        style={{
+          maxWidth: "500px",
+          margin: "50px auto",
+          padding: "30px",
+          backgroundColor: "#f9f9f9",
+          borderRadius: "10px",
+        }}
+      >
         <h2 style={{ textAlign: "center", marginBottom: "30px" }}>Resident Registration</h2>
         <form onSubmit={handleRegister}>
           <input
@@ -72,6 +82,13 @@ export default function RegisterResident() {
             placeholder="Email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            style={{ width: "100%", padding: "12px", marginBottom: "15px", borderRadius: "5px", border: "1px solid #ccc" }}
+          />
+          <input
+            type="text"
+            placeholder="Flat Number"
+            value={flatNumber}
+            onChange={(e) => setFlatNumber(e.target.value)}
             style={{ width: "100%", padding: "12px", marginBottom: "15px", borderRadius: "5px", border: "1px solid #ccc" }}
           />
           <input
