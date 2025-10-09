@@ -1,25 +1,50 @@
-import logo from './logo.svg';
-import './App.css';
+import React from "react";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 
-function App() {
+import Login from "./pages/Login";
+import RegisterResident from "./pages/RegisterResident";
+
+import { residentRoutes, watchmanRoutes, adminRoutes } from "./roleRoutes";
+import ProtectedRoute from "./components/ProtectedRoute";
+
+export default function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <Router>
+      <Routes>
+        {/* Public */}
+        <Route path="/" element={<Login />} />
+        <Route path="/register" element={<RegisterResident />} />
+
+        {/* Resident */}
+        {residentRoutes.map((r, i) => (
+          <Route
+            key={i}
+            path={r.path}
+            element={<ProtectedRoute roleRequired="resident">{r.element}</ProtectedRoute>}
+          />
+        ))}
+
+        {/* Watchman */}
+        {watchmanRoutes.map((r, i) => (
+          <Route
+            key={i}
+            path={r.path}
+            element={<ProtectedRoute roleRequired="watchman">{r.element}</ProtectedRoute>}
+          />
+        ))}
+
+        {/* Admin */}
+        {adminRoutes.map((r, i) => (
+          <Route
+            key={i}
+            path={r.path}
+            element={<ProtectedRoute roleRequired="admin">{r.element}</ProtectedRoute>}
+          />
+        ))}
+
+        {/* Fallback */}
+        <Route path="*" element={<Navigate to="/" />} />
+      </Routes>
+    </Router>
   );
 }
-
-export default App;
