@@ -3,10 +3,27 @@ import { Navigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 
 export default function ProtectedRoute({ children, roleRequired }) {
-  const { currentUser, role } = useContext(AuthContext);
+  const { currentUser, role, loading } = useContext(AuthContext);
 
-  if (!currentUser) return <Navigate to="/" />;
-  if (roleRequired && role !== roleRequired) return <Navigate to="/" />;
+  if (loading) {
+    return (
+      <div
+        style={{
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontSize: "18px",
+          color: "#003366",
+        }}
+      >
+        Loading...
+      </div>
+    );
+  }
+
+  if (!currentUser) return <Navigate to="/" replace />;
+  if (roleRequired && role !== roleRequired) return <Navigate to="/" replace />;
 
   return children;
 }

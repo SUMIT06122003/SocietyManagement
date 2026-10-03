@@ -11,57 +11,109 @@ import { doc, setDoc, getDoc } from "firebase/firestore";
 
 export const AuthContext = createContext();
 
+const normalizeEmail = (email = "") => email.trim().toLowerCase();
+
+const adminCredentials = [
+  { email: "harshpandey1@admin.com", password: "Harsh@1234" },
+  { email: "harshpandey@admin.co", password: "Hash@0612" },
+  { email: "sumit@admin.com", password: "Admin@123" },
+];
+
+const getUserRole = async (email) => {
+  if (!email) return null;
+
+  const normalizedEmail = normalizeEmail(email);
+  const userDoc = await getDoc(doc(db, "users", normalizedEmail));
+
+  if (userDoc.exists()) {
+    return userDoc.data().role || null;
+  }
+
+  if (adminCredentials.some((admin) => normalizeEmail(admin.email) === normalizedEmail)) {
+    return "admin";
+  }
+
+  return null;
+};
+
+const ensureAdminAccount = async (email, password) => {
+  const normalizedEmail = normalizeEmail(email);
+  const candidate = adminCredentials.find(
+    (admin) => normalizeEmail(admin.email) === normalizedEmail
+  );
+
+  if (!candidate) return null;
+
+  const adminRef = doc(db, "users", normalizedEmail);
+  const adminDoc = await getDoc(adminRef);
+
+  if (!adminDoc.exists()) {
+    try {
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        candidate.email,
+        candidate.password
+      );
+
+      await updateProfile(userCredential.user, { displayName: "Admin" });
+      await setDoc(adminRef, {
+        email: normalizedEmail,
+        name: "Admin",
+        role: "admin",
+        createdAt: new Date(),
+      });
+
+      return "admin";
+    } catch (err) {
+      if (err.code === "auth/email-already-in-use") {
+        await setDoc(
+          adminRef,
+          {
+            email: normalizedEmail,
+            name: "Admin",
+            role: "admin",
+            createdAt: new Date(),
+          },
+          { merge: true }
+        );
+        return "admin";
+      }
+
+      throw err;
+    }
+  }
+
+  return adminDoc.data().role || "admin";
+};
+
 export const AuthProvider = ({ children }) => {
   const [currentUser, setCurrentUser] = useState(null);
   const [role, setRole] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // ✅ Auto-create default Admin if not exists
-  const createDefaultAdmin = async () => {
-    try {
-      const adminRef = doc(db, "users", "Sumit@admin.com");
-      const docSnap = await getDoc(adminRef);
-
-      if (!docSnap.exists()) {
-        const userCredential = await createUserWithEmailAndPassword(
-          auth,
-          "Sumit@admin.com",
-          "Sumit@0612"
-        );
-        await updateProfile(userCredential.user, { displayName: "Admin" });
-
-        await setDoc(adminRef, {
-          email: "Sumit@admin.com",
-          role: "admin",
-          name: "Admin",
-        });
-
-        console.log("✅ Default admin created.");
-      } else {
-        console.log("✅ Admin already exists.");
-      }
-    } catch (err) {
-      if (err.code === "auth/email-already-in-use") {
-        console.log("✅ Admin already exists.");
-      } else {
-        console.error("Error creating admin:", err.message);
-      }
-    }
-  };
-
-  // ✅ Handle login
   const login = async (email, password) => {
     try {
-      const res = await signInWithEmailAndPassword(auth, email, password);
-      const docSnap = await getDoc(doc(db, "users", email));
-      if (docSnap.exists()) setRole(docSnap.data().role);
-      return res;
+      const normalizedEmail = normalizeEmail(email);
+      const matchedAdmin = adminCredentials.find(
+        (admin) => normalizeEmail(admin.email) === normalizedEmail
+      );
+
+      if (matchedAdmin) {
+        await ensureAdminAccount(matchedAdmin.email, matchedAdmin.password);
+      }
+
+      const res = await signInWithEmailAndPassword(auth, normalizedEmail, password);
+      const nextRole = matchedAdmin ? "admin" : await getUserRole(normalizedEmail);
+
+      setCurrentUser(res.user);
+      setRole(nextRole);
+
+      return { ...res, role: nextRole };
     } catch (err) {
       throw new Error(err.message);
     }
   };
 
-  // ✅ Handle logout
   const logout = async () => {
     try {
       await signOut(auth);
@@ -72,13 +124,17 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // ✅ Handle resident registration
   const registerResident = async (name, email, password, flatNumber) => {
-    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    const normalizedEmail = normalizeEmail(email);
+    const userCredential = await createUserWithEmailAndPassword(
+      auth,
+      normalizedEmail,
+      password
+    );
     await updateProfile(userCredential.user, { displayName: name });
 
-    await setDoc(doc(db, "users", email), {
-      email,
+    await setDoc(doc(db, "users", normalizedEmail), {
+      email: normalizedEmail,
       name,
       flatNumber,
       role: "resident",
@@ -86,17 +142,18 @@ export const AuthProvider = ({ children }) => {
     });
   };
 
-  // ✅ Auth state listener
   useEffect(() => {
-    createDefaultAdmin();
-
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
         setCurrentUser(user);
 
         try {
-          const userDoc = await getDoc(doc(db, "users", user.email));
-          setRole(userDoc.exists() ? userDoc.data().role : null);
+          const matchedAdmin = adminCredentials.find(
+            (admin) => normalizeEmail(admin.email) === normalizeEmail(user.email || "")
+          );
+
+          const nextRole = matchedAdmin ? "admin" : await getUserRole(user.email);
+          setRole(nextRole);
         } catch (err) {
           console.error("Error fetching user role:", err.message);
           setRole(null);
@@ -105,6 +162,7 @@ export const AuthProvider = ({ children }) => {
         setCurrentUser(null);
         setRole(null);
       }
+
       setLoading(false);
     });
 
@@ -120,5 +178,5 @@ export const AuthProvider = ({ children }) => {
     registerResident,
   };
 
-  return <AuthContext.Provider value={value}>{!loading && children}</AuthContext.Provider>;
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

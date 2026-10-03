@@ -24,6 +24,7 @@ export default function VisitorsView() {
           <tr>
             <th style={{ border: "1px solid #ccc", padding: "10px" }}>Name</th>
             <th style={{ border: "1px solid #ccc", padding: "10px" }}>Mobile Number</th>
+            <th style={{ border: "1px solid #ccc", padding: "10px" }}>Flat</th>
             <th style={{ border: "1px solid #ccc", padding: "10px" }}>Purpose</th>
             <th style={{ border: "1px solid #ccc", padding: "10px" }}>Date / Time</th>
           </tr>
@@ -33,6 +34,7 @@ export default function VisitorsView() {
             <tr key={v.id}>
               <td style={{ border: "1px solid #ccc", padding: "10px" }}>{v.name}</td>
               <td style={{ border: "1px solid #ccc", padding: "10px" }}>{v.mobile}</td>
+              <td style={{ border: "1px solid #ccc", padding: "10px" }}>{v.flatNumber || "—"}</td>
               <td style={{ border: "1px solid #ccc", padding: "10px" }}>{v.purpose}</td>
               <td style={{ border: "1px solid #ccc", padding: "10px" }}>
                 {v.timestamp?.toDate ? v.timestamp.toDate().toLocaleString() : ""}
